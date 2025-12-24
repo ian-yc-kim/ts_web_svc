@@ -7,7 +7,11 @@ import ProtectedRoute from './ProtectedRoute';
 
 describe('ProtectedRoute', () => {
   it('redirects unauthenticated users to /login', () => {
-    const auth = { isAuthenticated: false, login: async () => {} } as any;
+    const auth = {
+      isAuthenticated: false,
+      login: async () => {},
+      logout: () => {},
+    };
 
     renderWithAuth(
       <Routes>
@@ -29,7 +33,11 @@ describe('ProtectedRoute', () => {
   });
 
   it('renders children for authenticated users', () => {
-    const auth = { isAuthenticated: true, login: async () => {} } as any;
+    const auth = {
+      isAuthenticated: true,
+      login: async () => {},
+      logout: () => {},
+    };
 
     renderWithAuth(
       <Routes>

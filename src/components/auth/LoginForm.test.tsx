@@ -8,7 +8,8 @@ import { renderWithAuth } from '../../test/utils';
 describe('LoginForm', () => {
   it('shows email validation error and blocks submit', async () => {
     const mockLogin = vi.fn().mockResolvedValue(undefined);
-    renderWithAuth(<LoginForm />, { isAuthenticated: false, login: mockLogin }, { route: '/login' });
+    const mockLogout = vi.fn();
+    renderWithAuth(<LoginForm />, { isAuthenticated: false, login: mockLogin, logout: mockLogout }, { route: '/login' });
 
     await userEvent.type(screen.getByLabelText(/email/i), 'invalid-email');
     await userEvent.type(screen.getByLabelText(/password/i), 'Password1');
@@ -20,7 +21,8 @@ describe('LoginForm', () => {
 
   it('shows password validation error and blocks submit', async () => {
     const mockLogin = vi.fn().mockResolvedValue(undefined);
-    renderWithAuth(<LoginForm />, { isAuthenticated: false, login: mockLogin }, { route: '/login' });
+    const mockLogout = vi.fn();
+    renderWithAuth(<LoginForm />, { isAuthenticated: false, login: mockLogin, logout: mockLogout }, { route: '/login' });
 
     await userEvent.type(screen.getByLabelText(/email/i), 'user@example.com');
     await userEvent.type(screen.getByLabelText(/password/i), 'short');
@@ -32,6 +34,7 @@ describe('LoginForm', () => {
 
   it('calls login and navigates to board on success', async () => {
     const mockLogin = vi.fn().mockResolvedValue(undefined);
+    const mockLogout = vi.fn();
 
     // Provide minimal routing: when navigate to /board we will render a placeholder
     const ui = (
@@ -44,7 +47,7 @@ describe('LoginForm', () => {
     );
 
     // Render LoginForm only; simulate successful login by asserting login called
-    renderWithAuth(<LoginForm />, { isAuthenticated: false, login: mockLogin }, { route: '/login' });
+    renderWithAuth(<LoginForm />, { isAuthenticated: false, login: mockLogin, logout: mockLogout }, { route: '/login' });
 
     await userEvent.type(screen.getByLabelText(/email/i), 'user@example.com');
     await userEvent.type(screen.getByLabelText(/password/i), 'Passw0rd');
@@ -55,7 +58,8 @@ describe('LoginForm', () => {
 
   it('displays form-level error on failed login', async () => {
     const mockLogin = vi.fn().mockRejectedValue(new Error('Invalid credentials'));
-    renderWithAuth(<LoginForm />, { isAuthenticated: false, login: mockLogin }, { route: '/login' });
+    const mockLogout = vi.fn();
+    renderWithAuth(<LoginForm />, { isAuthenticated: false, login: mockLogin, logout: mockLogout }, { route: '/login' });
 
     await userEvent.type(screen.getByLabelText(/email/i), 'user@example.com');
     await userEvent.type(screen.getByLabelText(/password/i), 'Passw0rd');
