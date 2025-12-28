@@ -58,3 +58,66 @@ export function clearToken(): void {
     console.error('auth-service:clearToken', error);
   }
 }
+
+export async function register(email: string, password: string): Promise<void> {
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!res.ok) {
+      let message = 'Registration failed';
+      try {
+        const json = await res.json();
+        if (json?.message) message = json.message;
+      } catch (_) {
+        try {
+          const text = await res.text();
+          if (text) message = text;
+        } catch (_) {
+          // ignore
+        }
+      }
+      throw new Error(message);
+    }
+
+    // No token expected on register. Return void.
+    return;
+  } catch (error) {
+    console.error('auth-service:register', error);
+    throw error;
+  }
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/request-password-reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!res.ok) {
+      let message = 'Request password reset failed';
+      try {
+        const json = await res.json();
+        if (json?.message) message = json.message;
+      } catch (_) {
+        try {
+          const text = await res.text();
+          if (text) message = text;
+        } catch (_) {
+          // ignore
+        }
+      }
+      throw new Error(message);
+    }
+
+    return;
+  } catch (error) {
+    console.error('auth-service:requestPasswordReset', error);
+    throw error;
+  }
+}
