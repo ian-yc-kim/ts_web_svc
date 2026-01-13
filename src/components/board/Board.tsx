@@ -1,36 +1,56 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import type { Board as BoardType, Column as ColumnType } from '../../types/board';
 import boardService from '../../services/board-service';
 import { Column } from './Column';
 import './Board.css';
+import useBoardSocket from '../../hooks/useBoardSocket';
+import socketService from '../../services/socket-service';
 
 export const Board = () => {
   const [board, setBoard] = useState<BoardType | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const isMountedRef = useRef<boolean>(true);
+
+  useBoardSocket();
 
   useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const b = await boardService.fetchBoard();
-        if (mounted) setBoard(b);
-      } catch (err: unknown) {
-        console.error('Board:', err);
-        const message = err instanceof Error ? err.message : 'Failed to load board';
-        if (mounted) setError(message);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-
-    load();
     return () => {
-      mounted = false;
+      isMountedRef.current = false;
     };
   }, []);
+
+  const fetchBoard = useCallback(async () => {
+    try {
+      if (!isMountedRef.current) return;
+      if (isMountedRef.current) setLoading(true);
+      if (isMountedRef.current) setError(null);
+
+      const b = await boardService.fetchBoard();
+      if (isMountedRef.current) setBoard(b);
+    } catch (err: unknown) {
+      console.error('Board:', err);
+      const message = err instanceof Error ? err.message : 'Failed to load board';
+      if (isMountedRef.current) setError(message);
+    } finally {
+      if (isMountedRef.current) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchBoard();
+  }, [fetchBoard]);
+
+  useEffect(() => {
+    const handler = () => {
+      void fetchBoard();
+    };
+
+    socketService.subscribe('board_update', handler);
+    return () => {
+      socketService.unsubscribe('board_update', handler);
+    };
+  }, [fetchBoard]);
 
   const renderEmpty = () => (
     <div role="status" className="board__empty">
@@ -55,7 +75,7 @@ export const Board = () => {
   const mappedColumns = fixedTitles.map((ftitle, idx) => {
     const found = columnsByLowerTitle.get(ftitle.toLowerCase());
     if (found) return found;
-    return fallback[idx] ?? { id: `empty-${idx}`, title: ftitle, tasks: [], order: idx } as ColumnType;
+    return (fallback[idx] ?? { id: `empty-${idx}`, title: ftitle, tasks: [], order: idx }) as ColumnType;
   });
 
   return (

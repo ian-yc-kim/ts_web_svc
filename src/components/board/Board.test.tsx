@@ -2,6 +2,20 @@ import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 
+// Prevent real WebSocket interactions during component tests
+vi.mock('../../hooks/useBoardSocket', () => ({
+  default: vi.fn(),
+}));
+
+vi.mock('../../services/socket-service', () => ({
+  default: {
+    subscribe: vi.fn(),
+    unsubscribe: vi.fn(),
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+  },
+}));
+
 vi.mock('../../services/board-service', () => ({
   default: {
     fetchBoard: vi.fn(),
@@ -10,24 +24,31 @@ vi.mock('../../services/board-service', () => ({
 
 import boardService from '../../services/board-service';
 import Board from './Board';
+import { renderWithAuth } from '../../test/utils';
 
 describe('Board', () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
 
+  const authValue = {
+    isAuthenticated: true,
+    login: vi.fn(),
+    logout: vi.fn(),
+  } as any;
+
   it('shows loading state while fetching', async () => {
     // fetchBoard returns a promise that never resolves to simulate loading
     (boardService as any).fetchBoard.mockImplementation(() => new Promise(() => {}));
 
-    render(<Board />);
+    renderWithAuth(<Board />, authValue);
 
     expect(screen.getByText(/loading/i)).toBeDefined();
   });
 
   it('shows error when fetch fails', async () => {
     (boardService as any).fetchBoard.mockRejectedValue(new Error('boom'));
-    render(<Board />);
+    renderWithAuth(<Board />, authValue);
 
     await waitFor(() => expect(screen.getByRole('alert')).toBeDefined());
     expect(screen.getByRole('alert')).toHaveTextContent(/boom/);
@@ -46,7 +67,7 @@ describe('Board', () => {
 
     (boardService as any).fetchBoard.mockResolvedValue(board);
 
-    render(<Board />);
+    renderWithAuth(<Board />, authValue);
 
     // Wait for columns to appear
     await waitFor(() => expect(screen.getByText(/to do/i)).toBeDefined());
@@ -63,7 +84,7 @@ describe('Board', () => {
     const board = { id: 'b2', title: 'Empty', columns: [] };
     (boardService as any).fetchBoard.mockResolvedValue(board);
 
-    render(<Board />);
+    renderWithAuth(<Board />, authValue);
 
     await waitFor(() => expect(screen.getByRole('status')).toBeDefined());
     expect(screen.getByRole('status')).toHaveTextContent(/no board data available/i);
