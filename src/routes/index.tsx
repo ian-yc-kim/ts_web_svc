@@ -4,6 +4,7 @@ import { LoginPage } from '../pages/LoginPage';
 import { ProtectedRoute } from '../components/navigation/ProtectedRoute';
 import RegistrationPage from '../pages/RegistrationPage';
 import PasswordResetPage from '../pages/PasswordResetPage';
+import BoardPage from '../pages/BoardPage';
 
 export const AppRoutes = () => {
   return (
@@ -16,7 +17,7 @@ export const AppRoutes = () => {
           path="/board"
           element={
             <ProtectedRoute>
-              <div>Board</div>
+              <BoardPage />
             </ProtectedRoute>
           }
         />
